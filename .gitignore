@@ -5,16 +5,11 @@
 **/publish/
 **/TestResults/
 **/*.tsbuildinfo
-desktop/renderer/
 **/.vite/
 **/.playwright-cli/
 artifacts/
 test-results/
 .env*
-
-# Abandoned geometry helper; not product source.
-/web/test-measure.cjs
-/web/measure-tmp.js
 
 # Local runtime and IDE data
 .vs/

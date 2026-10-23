@@ -1,0 +1,14 @@
+{
+  "name": "quota",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A minimal Windows tray monitor for AI subscription limits",
+  "author": "Quota contributors",
+  "license": "MIT",
+  "scripts": {
+    "dev": "npm --prefix src/web run dev",
+    "lint": "npm --prefix src/web run lint",
+    "test": "node --test src/native/tests/preload.test.cjs && dotnet test src/bridge/tests/Costats.Bridge.Tests.csproj -c Release",
+    "build": "node scripts/package-native.cjs"
+  }
+}
