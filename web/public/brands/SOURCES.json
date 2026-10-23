@@ -1,0 +1,47 @@
+{
+  "package": "@lobehub/icons-static-svg",
+  "version": "1.95.1",
+  "repository": "https://github.com/lobehub/lobe-icons",
+  "files": [
+    {
+      "file": "openai.svg",
+      "source": "https://registry.npmjs.org/@lobehub/icons-static-svg/-/icons-static-svg-1.95.1.tgz",
+      "member": "package/icons/openai.svg",
+      "originalSha256": "a595df6b423920c67a7f8f73c063e4bfb72d415948097b6cac063a2366bb5186",
+      "sha256": "3559dc7e0fa64fc8111c80290df096e3f90ac3c3af18b0e01f198cda2434e548",
+      "adaptation": "currentColor replaced with #e4e4e7; paths unchanged"
+    },
+    {
+      "file": "codex.svg",
+      "source": "https://registry.npmjs.org/@lobehub/icons-static-svg/-/icons-static-svg-1.95.1.tgz",
+      "member": "package/icons/codex.svg",
+      "originalSha256": "d08b4e824cd6727e89617f59e4737273ff53e44c1da849d016dd64dfd08b33e1",
+      "sha256": "9f2bc373d8c0f196f161654145f9c84a1c851f474cf7800bc29d296d2694261f",
+      "adaptation": "currentColor replaced with #e4e4e7; paths unchanged"
+    },
+    {
+      "file": "antigravity.svg",
+      "source": "https://registry.npmjs.org/@lobehub/icons-static-svg/-/icons-static-svg-1.95.1.tgz",
+      "member": "package/icons/antigravity.svg",
+      "originalSha256": "43f551fd125c17fb54c8c74eb461924fb97f32bb64ac89f73bb73852753a6461",
+      "sha256": "5c9fdf7c107658278534dc483d90564067dedd19f0a229534c2c9014fb28cf2a",
+      "adaptation": "currentColor replaced with #e4e4e7; paths unchanged"
+    },
+    {
+      "file": "claude.svg",
+      "source": "https://registry.npmjs.org/@lobehub/icons-static-svg/-/icons-static-svg-1.95.1.tgz",
+      "member": "package/icons/claude.svg",
+      "originalSha256": "365a70a7eb3956d9b9a96086058ebe04e1dbd8e291a756ad964e8a283fbd6d38",
+      "sha256": "8f724eda1b715ebe050c8afbf15f3f943834e47eb2702fa23f5b9be33289501b",
+      "adaptation": "currentColor replaced with #e4e4e7; paths unchanged"
+    },
+    {
+      "file": "githubcopilot.svg",
+      "source": "https://registry.npmjs.org/@lobehub/icons-static-svg/-/icons-static-svg-1.95.1.tgz",
+      "member": "package/icons/githubcopilot.svg",
+      "originalSha256": "bbc7fddc13448236e5edea8c399d2072dc40aa5da5bca07f7a2f412405c500a3",
+      "sha256": "45ee0bdb26586defbae59449a172bf74fcb1c1fa56d9a3aae097e59bd58070ef",
+      "adaptation": "currentColor replaced with #e4e4e7; paths unchanged"
+    }
+  ]
+}

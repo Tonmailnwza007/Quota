@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <!-- App version single source of truth (major.minor.patch) -->
+    <VersionPrefix Condition="'$(VersionPrefix)' == ''">1.4.6</VersionPrefix>
+    <Version Condition="'$(Version)' == ''">$(VersionPrefix)</Version>
+    <AssemblyVersion Condition="'$(AssemblyVersion)' == ''">$([System.Version]::Parse('$(VersionPrefix).0'))</AssemblyVersion>
+    <FileVersion Condition="'$(FileVersion)' == ''">$([System.Version]::Parse('$(VersionPrefix).0'))</FileVersion>
+    <InformationalVersion Condition="'$(InformationalVersion)' == ''">$(Version)</InformationalVersion>
+
+    <!-- Embed debug symbols in assemblies for single-file publish -->
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+
+    <!-- Exclude PDBs from publish output -->
+    <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+  </PropertyGroup>
+</Project>

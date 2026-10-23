@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>quota</AssemblyName>
+    <RootNamespace>Quota.Native</RootNamespace>
+    <Version>1.0.0</Version>
+    <Product>Quota</Product>
+    <Description>A minimal AI usage tray flyout</Description>
+    <Company>Quota contributors</Company>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../bridge/Costats.Bridge.csproj" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
+    <Content Include="app.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="preload.js" Condition="Exists('preload.js')" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="smoke.js" Condition="Exists('smoke.js')" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../web/dist/**/*" Link="renderer/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="RemoveUnusedWebViewWpfReference" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Reference.Filename)' == 'Microsoft.Web.WebView2.Wpf'" />
+    </ItemGroup>
+  </Target>
+</Project>

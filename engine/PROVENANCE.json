@@ -1,0 +1,305 @@
+﻿{
+    "repository":  "https://github.com/fmdz387/costats",
+    "baseCommit":  "39f1f088e35c0ad66d365945b0b9b844dc2a0090",
+    "branch":  "feature/independent-sources-antigravity",
+    "description":  "Source snapshot including uncommitted independent-account/Antigravity implementation; no binaries or credentials",
+    "capturedAt":  "2026-10-18T10:28:08.2692416Z",
+    "files":  [
+                  {
+                      "path":  "Directory.Packages.props",
+                      "sha256":  "ed161874a233ab727f1f08d592aa0baad95f2a76895b79b47fe560fce2858685"
+                  },
+                  {
+                      "path":  "LICENSE",
+                      "sha256":  "07e9662a0a8012ce53dd07d27a357c6a2798d73da87a2aab6f367db9b11f076a"
+                  },
+                  {
+                      "path":  "src/Directory.Build.props",
+                      "sha256":  "c3076bbba9e1d8f176d29c954d898d5dde7c3b0b09639e60d55dcadd6dcc56fe"
+                  },
+                  {
+                      "path":  "src/costats.Core/costats.Core.csproj",
+                      "sha256":  "61e3f2d043e37f0db4be1d8083dd31bebbfbb8fde2cf027327db2556c16bc385"
+                  },
+                  {
+                      "path":  "src/costats.Core/Models/ProviderIdentitySnapshot.cs",
+                      "sha256":  "4d0d24d46818ef175d82c4c5fb1b6fa088b5ad1007d8167813ca5f0d6f9760b6"
+                  },
+                  {
+                      "path":  "src/costats.Core/Models/ProviderSnapshot.cs",
+                      "sha256":  "96b08338b2fcb22c0c486ee2e01476b76a81ce2fdfd2856d133d8f324836f703"
+                  },
+                  {
+                      "path":  "src/costats.Core/Models/RateWindow.cs",
+                      "sha256":  "dfb4f41e3887659e3cdb1098bb7714c82b18d1b24862ab7a4791e53d848e5891"
+                  },
+                  {
+                      "path":  "src/costats.Core/Models/UsageSnapshot.cs",
+                      "sha256":  "25c9bb2836b15efa8cfdb2bf2fd576d4b1dff8f346dcdffe7ad6a5f1ccd17a78"
+                  },
+                  {
+                      "path":  "src/costats.Core/Providers/ProviderDescriptor.cs",
+                      "sha256":  "5fcbbc996d00ef3de8cbb93e6cc0e2c2083cb95fb80018f1b0dcf4eefdb23293"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/IdentityCard.cs",
+                      "sha256":  "14173d3f37437d616e7ee8126c1b73a05da728feb8679275311ea20a1a6c6a08"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/MonetaryBucket.cs",
+                      "sha256":  "40954c81d47ebc31079a643c1d6da2c93b11a778380dcacee8d98269d09a1b8e"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/MulticcProfile.cs",
+                      "sha256":  "af33f37a14bcbbca68c317e687c6498ffdda4ec31c24e022bda521c18cbc6353"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/NamedQuotaBucket.cs",
+                      "sha256":  "44302c5a8241a6a28dc9faf75bde9b2d12ab3be36f8e38f8624cb857e56f3a88"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/ProviderProfile.cs",
+                      "sha256":  "ce0c5c9d1bf1abde64aebf98e5d6787472ff5a54094f91b402bdaae20c702b55"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/ProviderReading.cs",
+                      "sha256":  "8639605629f1da151b50e6435ac4bc6576b898fe899c974c6d1f8f5f2160e69b"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/PulseState.cs",
+                      "sha256":  "e62aac98b5e00c8b12306383ff78ae306559bb165e53d8adda842efb9c8eb68c"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/QuotaWindow.cs",
+                      "sha256":  "41bb3cce79e948163ced5d0382bb2b5102063efd310ea95f1b5efb675efe1599"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/RateCard.cs",
+                      "sha256":  "1d03def365e5590a02a16508ee9f60d64054ae31ea662f4d31d590940caafeaa"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/ReadingConfidence.cs",
+                      "sha256":  "d0f41aa08d7a18a5218db3539c998eb1dd688af76ad8198e97a157865e7a7fff"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/ReadingSource.cs",
+                      "sha256":  "0f7b71c41b5019c577a095e63b432820bc2e174719e4c4d51aa95af7da8814ed"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/RefreshTrigger.cs",
+                      "sha256":  "e05b7a90c8bd2ffd350ef4dc05f99ce9aab854d0e8a188e7e83333e77b5820ed"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/TokenLedger.cs",
+                      "sha256":  "99a4720cb8340be159c017957e97c992ba6131a402c6f5a92ee6f1976c4996f9"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/UsageFormatter.cs",
+                      "sha256":  "8e11339ccb78af7bf02b4fa04ca3a5c19d5b944753f6bff2634c2f0404df1c76"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/UsagePace.cs",
+                      "sha256":  "cb2de448ce3b4cf3e726fe11d26deecca8c55e339a299ce9abb46101cd42cd7f"
+                  },
+                  {
+                      "path":  "src/costats.Core/Pulse/UsagePulse.cs",
+                      "sha256":  "e58a1a3da8a0d96d071beb76f23198dca4583f662207fa0dc6679d34f4c695c2"
+                  },
+                  {
+                      "path":  "src/costats.Application/costats.Application.csproj",
+                      "sha256":  "f6579efac263259e22cebd1b4598a13a1e793c30e32706092ea84d3dba14d2d2"
+                  },
+                  {
+                      "path":  "src/costats.Application/Abstractions/IClock.cs",
+                      "sha256":  "8217268a3dfd1202190774a57ef94e0914e379b7fc4ef8c995bb3dff9feae132"
+                  },
+                  {
+                      "path":  "src/costats.Application/Abstractions/IUsageProvider.cs",
+                      "sha256":  "37edc5eea01f2759d8ea952fce424d89e416267b0e6e7902b44794ebd88f390c"
+                  },
+                  {
+                      "path":  "src/costats.Application/Pulse/IMulticcDiscovery.cs",
+                      "sha256":  "8e3a531360f474af4179c1334ff2324528edc35f6b0032dc725e9ff0b3a17590"
+                  },
+                  {
+                      "path":  "src/costats.Application/Pulse/IPulseOrchestrator.cs",
+                      "sha256":  "af984c97daaa13842bc60d5c1651863d9fcc0b5b9fb5120711f50980273b58fb"
+                  },
+                  {
+                      "path":  "src/costats.Application/Pulse/IPulseSnapshotWriter.cs",
+                      "sha256":  "dc75d56a6032445603e958f8ddf41d381b601fe88722c1d1849135dcf218905c"
+                  },
+                  {
+                      "path":  "src/costats.Application/Pulse/ISignalSource.cs",
+                      "sha256":  "cefdcc4462e2ef895876f319967a9e725be141fcb401de3efd2a33b993879630"
+                  },
+                  {
+                      "path":  "src/costats.Application/Pulse/ISourceSelector.cs",
+                      "sha256":  "6516fc7b8cc0099bc9b7c07222fc173af6ee8d41053c712eb0199e45a20cf2b2"
+                  },
+                  {
+                      "path":  "src/costats.Application/Pulse/PulseBroadcaster.cs",
+                      "sha256":  "b6b4dc6ea59eca2c8faefa0dd4d3c201a069047e91115b946df7c885bd3b45b0"
+                  },
+                  {
+                      "path":  "src/costats.Application/Pulse/PulseOptions.cs",
+                      "sha256":  "068b410ec532d59514c0ce52e580d819f9c6d96c094bb7ae5f731becfe60a2a7"
+                  },
+                  {
+                      "path":  "src/costats.Application/Pulse/PulseOrchestrator.cs",
+                      "sha256":  "bb168885e2a05bd186e287c804f97a4a2d559e48f2a0b35ffccbeb5038b5f388"
+                  },
+                  {
+                      "path":  "src/costats.Application/Pulse/SourceSelector.cs",
+                      "sha256":  "bacb7db3babd89f115d3999e860d10cdbcb603b20a06dd8346fa7624bf105718"
+                  },
+                  {
+                      "path":  "src/costats.Application/Security/CredentialKeys.cs",
+                      "sha256":  "1f1a612f9076c2a47746b17f2d7c225a241c572019c760dbe20daf9e993c6d9f"
+                  },
+                  {
+                      "path":  "src/costats.Application/Security/ICredentialVault.cs",
+                      "sha256":  "7d8b4d2162b984dccd665d707971fd828b89a9898fe1a86b3ff93d9a23250993"
+                  },
+                  {
+                      "path":  "src/costats.Application/Settings/AppSettings.cs",
+                      "sha256":  "cc9436686e82c48c336b825c5c0813e0706e85527cfa6b3bb5b4ecad2e17f119"
+                  },
+                  {
+                      "path":  "src/costats.Application/Settings/ISettingsStore.cs",
+                      "sha256":  "7502b48043fcb66b9d2287faf96b3c467f7af15a763f6d6263ad3f16c076cd42"
+                  },
+                  {
+                      "path":  "src/costats.Application/Shell/IGlassBackdropService.cs",
+                      "sha256":  "a13522e60496ddeb1b62115fecec7661b407f3d3ecc7941536f2b61ba1c4207d"
+                  },
+                  {
+                      "path":  "src/costats.Application/Usage/UsageRefreshService.cs",
+                      "sha256":  "a1ea86d5647742d0ece346d1c017619879e445843b517a66be26f697cbba392c"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/costats.Infrastructure.csproj",
+                      "sha256":  "f1f907cdfd3767fe775232f399f4535d57f9035d8d4d09137ee46792f8793b97"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Expense/ExpenseAnalyzer.cs",
+                      "sha256":  "cdc3132732684c9fd7dffad0bad3a42c1240ea846707831f3f826a276664ac12"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Expense/LogDigestor.cs",
+                      "sha256":  "7805668c1cb308acc294cea68ab81df19f37500c7761ac11530e67a67586c2ce"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Network/TcpEndpointHelper.cs",
+                      "sha256":  "a75d9b876d67da0095f8798ccc5b4082a3401cb168226b8ac8daecab21bf9805"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/AntigravityAppSource.cs",
+                      "sha256":  "0c1afc445fdee2d0204eb51c2d82e20c2d40c24e3cf6c9ecc9867ac5bc617a50"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/AntigravityCliSource.cs",
+                      "sha256":  "bc7c1b329d4a7f16876144fe8dbcc3fe1de87ad6e77fbb58f8881dedf6fbea37"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/AntigravityQuotaParser.cs",
+                      "sha256":  "5520d7794358b359c630a0f90b36c40f670d69eacea8ddb1587201d420190cbe"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/ClaudeCliProbe.cs",
+                      "sha256":  "fdf269dddf635d1b059020804066dc658578037b8459e484f92ccf5403e2106a"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/ClaudeCliSource.cs",
+                      "sha256":  "33916b382eb701159d79507b6d9016d21ec66716c81b19f3a94e60bf7b964e4d"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/ClaudeLogSource.cs",
+                      "sha256":  "50ce4a9f1da8139f07c6f21c4dcd16d47dc05318d3061575dd4d8076c95292c9"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/ClaudeOAuthUsageFetcher.cs",
+                      "sha256":  "f99d83777d385eea9cbe51948e6f899467f662d284444b25766d76b31da896d5"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/CodexAccountRecord.cs",
+                      "sha256":  "e79e6e36c7c5cf970fb9678824b617d123eaad306c18600a0ed3b7be39354d7f"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/CodexCliProbe.cs",
+                      "sha256":  "4779f776318b013a9c385bd9e4d4f8e1b313a9c2779987c6c9b3c50f7f0911b7"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/CodexCliSource.cs",
+                      "sha256":  "ea29f7199f37128e9d0639ada43a242c7afe58c00ead7b7ed34be07a5844a69c"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/CodexCredentialLoader.cs",
+                      "sha256":  "766d383bfc9c7d4523ee1600bf4f22b5a4c6916656c8dd1c92ee0d9be8b9ae7f"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/CodexLogSource.cs",
+                      "sha256":  "08c1b0e86777a8eb2f6e412968ee10bb4fc6418d8fa2fd9454ae01f9a1090f51"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/CodexOAuthUsageFetcher.cs",
+                      "sha256":  "ec39cbc148d9a51333ac4334356b652319a44c3a00ce958ef42c9fd0f01d059f"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/CodexSourceCommon.cs",
+                      "sha256":  "c9f717f874e2302ed19d10f11d4cad35b40829de3e96c6cbde79d05f8219ae3e"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/CopilotPersonalSource.cs",
+                      "sha256":  "af63190bbe7678177094b29f4db8f17227c54e373389d7e1ce8371bd05bdceab"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/CopilotUsageFetcher.cs",
+                      "sha256":  "0f43d21a15e8a25b1935833775c52e6cd1c726ec476a50241ddc639f7b6b897e"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/MulticcClaudeLogSource.cs",
+                      "sha256":  "256858ed1321abec7f91bdc2caf59635f28c9806d8ffe3d67cd83291387a93a0"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/MulticcConfigReader.cs",
+                      "sha256":  "c05995e4b0538cecbcc5eb867850d19bb8693d609c00c80bdb33727c31d8a672"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/MulticcDiscoveryService.cs",
+                      "sha256":  "886c5e214535a3c58b40dee1d03ca09f67760b68df6c28782fe8cb3ca8721919"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Providers/ProviderCatalog.cs",
+                      "sha256":  "16a45b62f177cc40e542460f7088ddf8f87c617f1688f2ae6f9b2f11f61022cc"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Pulse/JsonPulseSnapshotWriter.cs",
+                      "sha256":  "c708c79a001844960d9d4c8ad07d96e30bda90d857726911dc66ad7e19ece977"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Security/CredentialVault.cs",
+                      "sha256":  "17e06684af90784f334b528cbfb8dc90f1baab1b597185d6d356921f9a71b35c"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Security/WindowsCredentialHelper.cs",
+                      "sha256":  "7f9f0af28cdc3061110855f39ad30f3ffcb94ec5075de6f72a5e581c01b7f6ec"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Settings/JsonSettingsStore.cs",
+                      "sha256":  "04630ce706b23859c0a7f3e191900edcfb3f3183cac3ba4825957f3fb1e59b74"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Time/SystemClock.cs",
+                      "sha256":  "f8ac0415b57ed2a14090ff742f7aed7003d8409e3bdc8c61f3204ff6f62c6e94"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Usage/UsageLogScanner.cs",
+                      "sha256":  "25eece5f78e1926790062de80a3a0880905b8d4f07afad45c40fb2283aebd84e"
+                  },
+                  {
+                      "path":  "src/costats.Infrastructure/Windows/GlassBackdropService.cs",
+                      "sha256":  "38c92bb2a12fb805d75e73c5f8ac03bddd6e45b67fa8cf7b660446456e1613a9"
+                  }
+              ]
+}

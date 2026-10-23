@@ -1,0 +1,685 @@
+--- a/src/costats.Application/Pulse/PulseOrchestrator.cs
++++ b/src/costats.Application/Pulse/PulseOrchestrator.cs
+@@ -449,12 +449,18 @@
+     {
+         // 1. Antigravity App vs Antigravity CLI shared account check
+         if (readings.TryGetValue("antigravity", out var appReading) &&
+-            readings.TryGetValue("antigravity-cli", out var cliReading))
++            readings.TryGetValue("antigravity-cli", out var cliReading) &&
++            HasMeasuredAntigravityQuota(appReading) && HasMeasuredAntigravityQuota(cliReading))
+         {
+             var appEmail = appReading.Identity?.Email ?? appReading.Usage?.AccountEmail;
+             var cliEmail = cliReading.Identity?.Email ?? cliReading.Usage?.AccountEmail;
+ 
+-            if (!string.IsNullOrWhiteSpace(appEmail) && string.Equals(appEmail, cliEmail, StringComparison.OrdinalIgnoreCase))
++            var appId = appReading.Usage?.AccountId;
++            var cliId = cliReading.Usage?.AccountId;
++            var sameAccount = !string.IsNullOrWhiteSpace(appId) && !string.IsNullOrWhiteSpace(cliId)
++                ? string.Equals(appId.Trim(), cliId.Trim(), StringComparison.Ordinal)
++                : !string.IsNullOrWhiteSpace(appEmail) && string.Equals(appEmail.Trim(), cliEmail?.Trim(), StringComparison.OrdinalIgnoreCase);
++            if (sameAccount)
+             {
+                 if (appReading.Usage is not null)
+                 {
+@@ -518,6 +524,10 @@
+         }
+     }
+ 
++    private static bool HasMeasuredAntigravityQuota(ProviderReading reading) =>
++        reading.Confidence == ReadingConfidence.High &&
++        reading.Usage?.QuotaBuckets?.Any(bucket => bucket.UsedPercent is { } percent && float.IsFinite(percent)) == true;
++
+     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+     {
+         try
+--- a/src/costats.Application/Settings/AppSettings.cs
++++ b/src/costats.Application/Settings/AppSettings.cs
+@@ -14,6 +14,12 @@
+     public bool ClaudeEnabled { get; set; } = true;
+     public bool CopilotEnabled { get; set; } = false;
+ 
++    // Quota-only display/alert preferences; original application defaults remain unchanged.
++    public bool ShowUsageDetails { get; set; } = false;
++    public bool QuotaNotificationsEnabled { get; set; } = true;
++    public int QuotaWarningPercent { get; set; } = 10;
++    public int QuotaCriticalPercent { get; set; } = 5;
++
+     // Custom paths and overrides for independent accounts
+     public string? CodexAuthPath { get; set; }
+     public string? CodexLogDir { get; set; }
+@@ -24,6 +30,11 @@
+     public string? AntigravityCliPath { get; set; }
+     public string? AntigravityCliCredentialTarget { get; set; }
+     public string? AntigravityCliAuthPath { get; set; }
++
++    // Modern unified quota source. Legacy App/CLI members remain for the original engine consumers.
++    public string AntigravitySource { get; set; } = "saved";
++    public string? AntigravityAuthPath { get; set; }
++    public string? AntigravityCredentialTarget { get; set; }
+ 
+     // Safe account selection (e.g. specific Zeron account record filename or id, e.g. "account_sample_id")
+     public string? CodexCliZeronAccountId { get; set; }
+--- a/src/costats.Infrastructure/Providers/AntigravityAppSource.cs
++++ b/src/costats.Infrastructure/Providers/AntigravityAppSource.cs
+@@ -374,7 +374,7 @@
+                     WeekWindow: null,
+                     QuotaBuckets: quotaResult.Buckets,
+                     AccountEmail: email,
+-                    AccountId: email);
++                    AccountId: null); // Email is not the Google subject identifier used by background OAuth.
+ 
+                 var statusSummary = quotaResult.Buckets.Count > 0
+                     ? $"Live ({quotaResult.Buckets.Count} quotas)"
+--- a/src/costats.Infrastructure/Providers/AntigravityQuotaParser.cs
++++ b/src/costats.Infrastructure/Providers/AntigravityQuotaParser.cs
+@@ -1,3 +1,7 @@
++// Derived from public research and schema definitions in AntigravityQuotaSummaryParser.swift
++// CodexBar 3a45dc7cf7c262fd26601fa0edfafddbf5ab465a, Copyright (c) 2026 Peter Steinberger.
++// MIT License retained in THIRD_PARTY_NOTICES.md; see engine/ADAPTATIONS.md.
++
+ using System.Globalization;
+ using System.Text.Json;
+ using costats.Core.Pulse;
+@@ -21,31 +25,61 @@
+         {
+             using var doc = JsonDocument.Parse(json);
+             var root = doc.RootElement;
+-
+-            // Handle wrapped { "response": { "groups": [ ... ] } } vs unwrapped { "groups": [ ... ] }
++            if (root.ValueKind != JsonValueKind.Object)
++            {
++                return new AntigravityQuotaResult(Array.Empty<NamedQuotaBucket>(), null);
++            }
++
++            // Handle wrapped structures:
++            // 1. response: { groups: [...] }
++            // 2. summary: { groups: [...] }
++            // 3. command.data: { groups: [...] } (CLI usage report)
+             JsonElement targetElement = root;
+-            if (root.TryGetProperty("response", out var responseProp) && responseProp.ValueKind == JsonValueKind.Object)
+-            {
+-                targetElement = responseProp;
++            if (TryGetObject(root, "response", out var resp))
++            {
++                targetElement = resp;
++            }
++            else if (TryGetObject(root, "summary", out var summ))
++            {
++                targetElement = summ;
++            }
++            else if (TryGetObject(root, "command", out var cmd))
++            {
++                if (TryGetObject(cmd, "data", out var cmdData))
++                {
++                    targetElement = cmdData;
++                }
++            }
++
++            // Fall back to root if targetElement doesn't have groups or buckets
++            if (!HasGroupsOrBuckets(targetElement) && HasGroupsOrBuckets(root))
++            {
++                targetElement = root;
+             }
+ 
+             var buckets = new List<NamedQuotaBucket>();
+-            string? summaryDescription = null;
+-
+-            if (targetElement.TryGetProperty("description", out var descProp) && descProp.ValueKind == JsonValueKind.String)
+-            {
+-                summaryDescription = descProp.GetString();
+-            }
+-
+-            if (targetElement.TryGetProperty("groups", out var groupsProp) && groupsProp.ValueKind == JsonValueKind.Array)
++            string? summaryDescription = GetTrimmedString(targetElement, "description") ?? GetTrimmedString(root, "description");
++
++            if (TryGetArray(targetElement, "groups", out var groupsProp) || TryGetArray(root, "groups", out groupsProp))
+             {
+                 foreach (var group in groupsProp.EnumerateArray())
+                 {
+-                    var groupName = group.TryGetProperty("displayName", out var gn) ? gn.GetString() : null;
+-                    if (group.TryGetProperty("buckets", out var bucketsProp) && bucketsProp.ValueKind == JsonValueKind.Array)
+-                    {
+-                        foreach (var bucket in bucketsProp.EnumerateArray())
++                    if (group.ValueKind != JsonValueKind.Object)
++                    {
++                        continue;
++                    }
++
++                    var groupName = GetTrimmedString(group, "displayName") ?? GetTrimmedString(group, "name");
++
++                    if (TryGetArray(group, "buckets", out var groupBuckets))
++                    {
++                        foreach (var bucket in groupBuckets.EnumerateArray())
+                         {
++                            if (bucket.ValueKind != JsonValueKind.Object)
++                            {
++                                continue;
++                            }
++
+                             var parsedBucket = ParseBucketElement(bucket, groupName);
+                             if (parsedBucket is not null)
+                             {
+@@ -57,21 +91,29 @@
+             }
+ 
+             // Fallback: check for top-level or response-level "buckets" array (e.g. retrieveUserQuota fallback)
+-            if (buckets.Count == 0 && targetElement.TryGetProperty("buckets", out var directBuckets) && directBuckets.ValueKind == JsonValueKind.Array)
+-            {
+-                foreach (var bucket in directBuckets.EnumerateArray())
+-                {
+-                    var parsedBucket = ParseBucketElement(bucket, null);
+-                    if (parsedBucket is not null)
+-                    {
+-                        buckets.Add(parsedBucket);
++            if (buckets.Count == 0)
++            {
++                if (TryGetArray(targetElement, "buckets", out var directBuckets) || TryGetArray(root, "buckets", out directBuckets))
++                {
++                    foreach (var bucket in directBuckets.EnumerateArray())
++                    {
++                        if (bucket.ValueKind != JsonValueKind.Object)
++                        {
++                            continue;
++                        }
++
++                        var parsedBucket = ParseBucketElement(bucket, null);
++                        if (parsedBucket is not null)
++                        {
++                            buckets.Add(parsedBucket);
++                        }
+                     }
+                 }
+             }
+ 
+             return new AntigravityQuotaResult(buckets, summaryDescription);
+         }
+-        catch (JsonException)
++        catch
+         {
+             return new AntigravityQuotaResult(Array.Empty<NamedQuotaBucket>(), null);
+         }
+@@ -88,44 +130,51 @@
+         {
+             using var doc = JsonDocument.Parse(json);
+             var root = doc.RootElement;
+-
+-            if (!root.TryGetProperty("userStatus", out var userStatus) || userStatus.ValueKind != JsonValueKind.Object)
++            if (root.ValueKind != JsonValueKind.Object)
+             {
+                 return new AntigravityQuotaResult(Array.Empty<NamedQuotaBucket>(), null);
+             }
+ 
++            if (!TryGetObject(root, "userStatus", out var userStatus))
++            {
++                return new AntigravityQuotaResult(Array.Empty<NamedQuotaBucket>(), null);
++            }
++
+             var buckets = new List<NamedQuotaBucket>();
+-            if (userStatus.TryGetProperty("cascadeModelConfigData", out var modelConfigData) &&
+-                modelConfigData.TryGetProperty("clientModelConfigs", out var configs) &&
+-                configs.ValueKind == JsonValueKind.Array)
++            if (TryGetObject(userStatus, "cascadeModelConfigData", out var modelConfigData) &&
++                TryGetArray(modelConfigData, "clientModelConfigs", out var configs))
+             {
+                 foreach (var config in configs.EnumerateArray())
+                 {
+-                    var label = config.TryGetProperty("label", out var l) ? l.GetString() : null;
+-                    var modelId = config.TryGetProperty("modelId", out var m) ? m.GetString() : null;
+-                    var id = modelId ?? label ?? "unknown";
++                    if (config.ValueKind != JsonValueKind.Object)
++                    {
++                        continue;
++                    }
++
++                    string? label = GetTrimmedString(config, "label");
++                    string? modelId = GetTrimmedString(config, "modelId");
++
++                    var id = modelId ?? label;
++                    if (string.IsNullOrWhiteSpace(id))
++                    {
++                        continue;
++                    }
++
+                     var name = label ?? modelId ?? "Unknown Model";
+ 
+                     float? usedPercent = null;
+                     DateTimeOffset? resetTime = null;
+ 
+-                    if (config.TryGetProperty("quotaInfo", out var quotaInfo) && quotaInfo.ValueKind == JsonValueKind.Object)
+-                    {
+-                        if (quotaInfo.TryGetProperty("remainingFraction", out var rf) ||
+-                            (quotaInfo.TryGetProperty("remaining", out var remObj) && remObj.ValueKind == JsonValueKind.Object && remObj.TryGetProperty("remainingFraction", out rf)))
++                    if (TryGetObject(config, "quotaInfo", out var quotaInfo))
++                    {
++                        double? remFraction = ExtractRemainingFraction(quotaInfo);
++                        usedPercent = CalculateUsedPercent(remFraction);
++
++                        string? rt = GetTrimmedString(quotaInfo, "resetTime");
++                        if (!string.IsNullOrWhiteSpace(rt) &&
++                            DateTimeOffset.TryParse(rt, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsedReset))
+                         {
+-                            if (rf.ValueKind == JsonValueKind.Number && rf.TryGetDouble(out var rem))
+-                            {
+-                                usedPercent = (float)Math.Clamp((1.0 - rem) * 100.0, 0.0, 100.0);
+-                            }
+-                        }
+-
+-                        if (quotaInfo.TryGetProperty("resetTime", out var rt) && rt.ValueKind == JsonValueKind.String)
+-                        {
+-                            if (DateTimeOffset.TryParse(rt.GetString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsedReset))
+-                            {
+-                                resetTime = parsedReset;
+-                            }
++                            resetTime = parsedReset;
+                         }
+                     }
+ 
+@@ -143,7 +192,7 @@
+ 
+             return new AntigravityQuotaResult(buckets, null);
+         }
+-        catch (JsonException)
++        catch
+         {
+             return new AntigravityQuotaResult(Array.Empty<NamedQuotaBucket>(), null);
+         }
+@@ -151,24 +200,22 @@
+ 
+     private static NamedQuotaBucket? ParseBucketElement(JsonElement bucket, string? groupName)
+     {
+-        string? bucketId = bucket.TryGetProperty("bucketId", out var bId) && bId.ValueKind == JsonValueKind.String ? bId.GetString() : null;
+-        string? displayName = bucket.TryGetProperty("displayName", out var dn) && dn.ValueKind == JsonValueKind.String ? dn.GetString() : null;
+-        string? modelId = bucket.TryGetProperty("modelId", out var mid) && mid.ValueKind == JsonValueKind.String ? mid.GetString() : null;
+-        string? desc = bucket.TryGetProperty("description", out var dp) && dp.ValueKind == JsonValueKind.String ? dp.GetString() : null;
+-        string? windowStr = bucket.TryGetProperty("window", out var wp) && wp.ValueKind == JsonValueKind.String ? wp.GetString() : null;
++        if (bucket.ValueKind != JsonValueKind.Object)
++        {
++            return null;
++        }
++
++        string? bucketId = GetTrimmedString(bucket, "bucketId") ?? GetTrimmedString(bucket, "id");
++        string? displayName = GetTrimmedString(bucket, "displayName") ?? GetTrimmedString(bucket, "name");
++        string? modelId = GetTrimmedString(bucket, "modelId");
++        string? desc = GetTrimmedString(bucket, "description") ?? GetTrimmedString(bucket, "resetDescription");
++        string? windowStr = GetTrimmedString(bucket, "window") ?? GetTrimmedString(bucket, "windowDuration");
+ 
+         // Support modelOrAlias.model or modelOrAlias.alias fallback
+         string? moaModel = null;
+-        if (bucket.TryGetProperty("modelOrAlias", out var moa) && moa.ValueKind == JsonValueKind.Object)
+-        {
+-            if (moa.TryGetProperty("model", out var mm) && mm.ValueKind == JsonValueKind.String)
+-            {
+-                moaModel = mm.GetString();
+-            }
+-            else if (moa.TryGetProperty("alias", out var ma) && ma.ValueKind == JsonValueKind.String)
+-            {
+-                moaModel = ma.GetString();
+-            }
++        if (TryGetObject(bucket, "modelOrAlias", out var moa))
++        {
++            moaModel = GetTrimmedString(moa, "model") ?? GetTrimmedString(moa, "alias");
+         }
+ 
+         var id = bucketId ?? modelId ?? moaModel ?? displayName;
+@@ -183,21 +230,14 @@
+             label = $"{groupName} - {label}";
+         }
+ 
+-        float? usedPercent = null;
+-        if (bucket.TryGetProperty("remainingFraction", out var rf) ||
+-            (bucket.TryGetProperty("remaining", out var remObj) && remObj.ValueKind == JsonValueKind.Object && remObj.TryGetProperty("remainingFraction", out rf)))
+-        {
+-            // Defensive: check ValueKind == Number first so string/null/object doesn't throw or get treated as 0
+-            if (rf.ValueKind == JsonValueKind.Number && rf.TryGetDouble(out var rem))
+-            {
+-                usedPercent = (float)Math.Clamp((1.0 - rem) * 100.0, 0.0, 100.0);
+-            }
+-        }
++        double? remFraction = ExtractRemainingFraction(bucket);
++        float? usedPercent = CalculateUsedPercent(remFraction);
+ 
+         DateTimeOffset? resetsAt = null;
+-        if (bucket.TryGetProperty("resetTime", out var rt) && rt.ValueKind == JsonValueKind.String)
+-        {
+-            if (DateTimeOffset.TryParse(rt.GetString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsed))
++        string? rtStr = GetTrimmedString(bucket, "resetTime") ?? GetTrimmedString(bucket, "resetsAt");
++        if (!string.IsNullOrWhiteSpace(rtStr))
++        {
++            if (DateTimeOffset.TryParse(rtStr, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsed))
+             {
+                 resetsAt = parsed;
+             }
+@@ -216,6 +256,89 @@
+             StatusSummary: desc);
+     }
+ 
++    private static double? ExtractRemainingFraction(JsonElement element)
++    {
++        if (element.ValueKind != JsonValueKind.Object)
++        {
++            return null;
++        }
++
++        // 1. Direct remainingFraction
++        if (element.TryGetProperty("remainingFraction", out var rf) && rf.ValueKind == JsonValueKind.Number)
++        {
++            if (rf.TryGetDouble(out var d))
++            {
++                return d;
++            }
++        }
++
++        // 2. Direct fraction
++        if (element.TryGetProperty("fraction", out var f) && f.ValueKind == JsonValueKind.Number)
++        {
++            if (f.TryGetDouble(out var d))
++            {
++                return d;
++            }
++        }
++
++        // 3. remaining object or number
++        if (element.TryGetProperty("remaining", out var rem))
++        {
++            if (rem.ValueKind == JsonValueKind.Number && rem.TryGetDouble(out var remNum))
++            {
++                return remNum;
++            }
++
++            if (rem.ValueKind == JsonValueKind.Object)
++            {
++                if (rem.TryGetProperty("remainingFraction", out var innerRf) && innerRf.ValueKind == JsonValueKind.Number)
++                {
++                    if (innerRf.TryGetDouble(out var d))
++                    {
++                        return d;
++                    }
++                }
++
++                if (rem.TryGetProperty("fraction", out var innerF) && innerF.ValueKind == JsonValueKind.Number)
++                {
++                    if (innerF.TryGetDouble(out var d))
++                    {
++                        return d;
++                    }
++                }
++
++                // Protobuf oneof JSON: { "case": "remainingFraction", "value": 0.8 }
++                if (rem.TryGetProperty("case", out var caseProp) && caseProp.ValueKind == JsonValueKind.String &&
++                    string.Equals(caseProp.GetString(), "remainingFraction", StringComparison.Ordinal) &&
++                    rem.TryGetProperty("value", out var valProp) && valProp.ValueKind == JsonValueKind.Number)
++                {
++                    if (valProp.TryGetDouble(out var d))
++                    {
++                        return d;
++                    }
++                }
++            }
++        }
++
++        return null;
++    }
++
++    private static float? CalculateUsedPercent(double? remainingFraction)
++    {
++        if (!remainingFraction.HasValue)
++        {
++            return null;
++        }
++
++        var rem = remainingFraction.Value;
++        if (double.IsNaN(rem) || double.IsInfinity(rem) || rem < 0.0 || rem > 1.0)
++        {
++            return null;
++        }
++
++        return (float)Math.Clamp((1.0 - rem) * 100.0, 0.0, 100.0);
++    }
++
+     private static TimeSpan? ParseWindowDuration(string? windowStr)
+     {
+         if (string.IsNullOrWhiteSpace(windowStr))
+@@ -223,24 +346,110 @@
+             return null;
+         }
+ 
+-        var s = windowStr.Trim().ToLowerInvariant();
+-        if (s.EndsWith("h") && double.TryParse(s[..^1], NumberStyles.Any, CultureInfo.InvariantCulture, out var hours))
+-        {
+-            return TimeSpan.FromHours(hours);
+-        }
+-        if (s.EndsWith("d") && double.TryParse(s[..^1], NumberStyles.Any, CultureInfo.InvariantCulture, out var days))
+-        {
+-            return TimeSpan.FromDays(days);
+-        }
+-        if (s.EndsWith("w") && double.TryParse(s[..^1], NumberStyles.Any, CultureInfo.InvariantCulture, out var weeks))
+-        {
+-            return TimeSpan.FromDays(weeks * 7);
+-        }
+-        if (s.EndsWith("m") && double.TryParse(s[..^1], NumberStyles.Any, CultureInfo.InvariantCulture, out var mins))
+-        {
+-            return TimeSpan.FromMinutes(mins);
++        try
++        {
++            var s = windowStr.Trim().ToLowerInvariant();
++
++            // Normalize descriptive words to unit suffixes
++            if (s.EndsWith("hours") || s.EndsWith("hour"))
++                s = s.Replace("hours", "h").Replace("hour", "h").Trim();
++            else if (s.EndsWith("days") || s.EndsWith("day"))
++                s = s.Replace("days", "d").Replace("day", "d").Trim();
++            else if (s.EndsWith("weeks") || s.EndsWith("week"))
++                s = s.Replace("weeks", "w").Replace("week", "w").Trim();
++            else if (s.EndsWith("minutes") || s.EndsWith("minute") || s.EndsWith("mins") || s.EndsWith("min"))
++                s = s.Replace("minutes", "m").Replace("minute", "m").Replace("mins", "m").Replace("min", "m").Trim();
++            else if (s.EndsWith("seconds") || s.EndsWith("second") || s.EndsWith("secs") || s.EndsWith("sec"))
++                s = s.Replace("seconds", "s").Replace("second", "s").Replace("secs", "s").Replace("sec", "s").Trim();
++
++            if (s.EndsWith("h") && double.TryParse(s[..^1], NumberStyles.Any, CultureInfo.InvariantCulture, out var hours) &&
++                IsValidPositiveNumber(hours))
++            {
++                return TimeSpan.FromHours(hours);
++            }
++            if (s.EndsWith("d") && double.TryParse(s[..^1], NumberStyles.Any, CultureInfo.InvariantCulture, out var days) &&
++                IsValidPositiveNumber(days))
++            {
++                return TimeSpan.FromDays(days);
++            }
++            if (s.EndsWith("w") && double.TryParse(s[..^1], NumberStyles.Any, CultureInfo.InvariantCulture, out var weeks) &&
++                IsValidPositiveNumber(weeks))
++            {
++                return TimeSpan.FromDays(weeks * 7);
++            }
++            if (s.EndsWith("m") && double.TryParse(s[..^1], NumberStyles.Any, CultureInfo.InvariantCulture, out var mins) &&
++                IsValidPositiveNumber(mins))
++            {
++                return TimeSpan.FromMinutes(mins);
++            }
++            if (s.EndsWith("s") && double.TryParse(s[..^1], NumberStyles.Any, CultureInfo.InvariantCulture, out var secs) &&
++                IsValidPositiveNumber(secs))
++            {
++                return TimeSpan.FromSeconds(secs);
++            }
++
++            // ISO 8601 duration: e.g. "PT5H", "P7D"
++            if (s.StartsWith("p"))
++            {
++                var ts = System.Xml.XmlConvert.ToTimeSpan(windowStr.Trim());
++                if (ts > TimeSpan.Zero)
++                {
++                    return ts;
++                }
++            }
++        }
++        catch
++        {
++            // Do not throw on huge or invalid duration strings
+         }
+ 
+         return null;
+     }
+-}
++
++    private static bool IsValidPositiveNumber(double value)
++    {
++        return !double.IsNaN(value) && !double.IsInfinity(value) && value > 0 && value < 100_000;
++    }
++
++    private static bool HasGroupsOrBuckets(JsonElement el)
++    {
++        return el.ValueKind == JsonValueKind.Object &&
++               ((el.TryGetProperty("groups", out var g) && g.ValueKind == JsonValueKind.Array) ||
++                (el.TryGetProperty("buckets", out var b) && b.ValueKind == JsonValueKind.Array));
++    }
++
++    private static bool TryGetObject(JsonElement element, string propertyName, out JsonElement result)
++    {
++        if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty(propertyName, out result) && result.ValueKind == JsonValueKind.Object)
++        {
++            return true;
++        }
++        result = default;
++        return false;
++    }
++
++    private static bool TryGetArray(JsonElement element, string propertyName, out JsonElement result)
++    {
++        if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty(propertyName, out result) && result.ValueKind == JsonValueKind.Array)
++        {
++            return true;
++        }
++        result = default;
++        return false;
++    }
++
++    private static string? GetTrimmedString(JsonElement element, string propertyName)
++    {
++        if (element.ValueKind == JsonValueKind.Object &&
++            element.TryGetProperty(propertyName, out var prop) &&
++            prop.ValueKind == JsonValueKind.String)
++        {
++            var s = prop.GetString();
++            if (!string.IsNullOrWhiteSpace(s))
++            {
++                return s.Trim();
++            }
++        }
++        return null;
++    }
++}
+--- a/src/costats.Infrastructure/Providers/ClaudeLogSource.cs
++++ b/src/costats.Infrastructure/Providers/ClaudeLogSource.cs
+@@ -12,10 +12,15 @@
+     private static readonly TimeSpan WeekDuration = TimeSpan.FromDays(7);
+ 
+     private readonly UsageLogScanner _scanner = new();
+-    private readonly ClaudeOAuthUsageFetcher _oauthFetcher = new();
++    private readonly ClaudeOAuthUsageFetcher _oauthFetcher;
+     private readonly ExpenseAnalyzer _expenseAnalyzer = new();
+ 
+     public ProviderProfile Profile => ProviderCatalog.Claude;
++
++    public ClaudeLogSource(bool readOnly = false)
++    {
++        _oauthFetcher = new ClaudeOAuthUsageFetcher(allowDelegatedRefresh: !readOnly, useDiskCache: !readOnly);
++    }
+ 
+     public async Task<ProviderReading> ReadAsync(CancellationToken cancellationToken)
+     {
+--- a/src/costats.Infrastructure/Providers/ClaudeOAuthUsageFetcher.cs
++++ b/src/costats.Infrastructure/Providers/ClaudeOAuthUsageFetcher.cs
+@@ -26,6 +26,10 @@
+ 
+     private readonly HttpClient _httpClient;
+     private readonly string? _configDir;
++    private readonly bool _allowDelegatedRefresh;
++    private readonly bool _useDiskCache;
++    private readonly Func<CancellationToken, Task> _delegatedRefresh;
++    private readonly string? _cacheDirectory;
+ 
+     private int _consecutiveFailures;
+     private DateTimeOffset _blockedUntil = DateTimeOffset.MinValue;
+@@ -34,9 +38,14 @@
+     private DateTimeOffset _memoryCacheWrittenAt = DateTimeOffset.MinValue;
+     private DateTimeOffset _refreshBlockedUntil = DateTimeOffset.MinValue;
+ 
+-    public ClaudeOAuthUsageFetcher()
+-    {
+-        _httpClient = new HttpClient
++    public ClaudeOAuthUsageFetcher(bool allowDelegatedRefresh = true, bool useDiskCache = true,
++        HttpClient? httpClient = null, Func<CancellationToken, Task>? delegatedRefresh = null, string? cacheDirectory = null)
++    {
++        _allowDelegatedRefresh = allowDelegatedRefresh;
++        _useDiskCache = useDiskCache;
++        _delegatedRefresh = delegatedRefresh ?? TryDelegatedRefreshAsync;
++        _cacheDirectory = cacheDirectory;
++        _httpClient = httpClient ?? new HttpClient
+         {
+             BaseAddress = new Uri(BaseUrl),
+             Timeout = TimeSpan.FromSeconds(30)
+@@ -46,7 +55,9 @@
+         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+     }
+ 
+-    public ClaudeOAuthUsageFetcher(string configDir) : this()
++    public ClaudeOAuthUsageFetcher(string configDir, bool allowDelegatedRefresh = true, bool useDiskCache = true,
++        HttpClient? httpClient = null, Func<CancellationToken, Task>? delegatedRefresh = null, string? cacheDirectory = null)
++        : this(allowDelegatedRefresh, useDiskCache, httpClient, delegatedRefresh, cacheDirectory)
+     {
+         _configDir = configDir;
+     }
+@@ -66,9 +77,9 @@
+         }
+ 
+         // 2. If token is expired, try delegated refresh via Claude CLI
+-        if (credentials is not null && IsTokenExpired(credentials))
+-        {
+-            await TryDelegatedRefreshAsync(cancellationToken).ConfigureAwait(false);
++        if (_allowDelegatedRefresh && credentials is not null && IsTokenExpired(credentials))
++        {
++            await _delegatedRefresh(cancellationToken).ConfigureAwait(false);
+             credentials = await LoadCredentialsAsync(_configDir);
+ 
+             var newFingerprint = ComputeFingerprint(credentials);
+@@ -93,7 +104,7 @@
+             _consecutiveFailures = 0;
+             _blockedUntil = DateTimeOffset.MinValue;
+             SetMemoryCache(fresh);
+-            _ = WriteDiskCacheAsync(fresh);
++            if (_useDiskCache) _ = WriteDiskCacheAsync(fresh);
+             return fresh;
+         }
+ 
+@@ -284,7 +295,7 @@
+         }
+ 
+         // Try disk cache
+-        var fromDisk = ReadDiskCache();
++        var fromDisk = _useDiskCache ? ReadDiskCache() : null;
+         if (fromDisk is not null && IsCacheValid(fromDisk))
+         {
+             SetMemoryCache(fromDisk);
+@@ -315,7 +326,7 @@
+         var profileSuffix = _configDir is not null
+             ? "_" + Path.GetFileName(_configDir)
+             : "";
+-        return Path.Combine(basePath, "costats", "cache", $"claude-oauth{profileSuffix}.json");
++        return Path.Combine(_cacheDirectory ?? Path.Combine(basePath, "costats", "cache"), $"claude-oauth{profileSuffix}.json");
+     }
+ 
+     private async Task WriteDiskCacheAsync(ClaudeOAuthUsageResult result)
+--- a/src/costats.Infrastructure/Providers/MulticcClaudeLogSource.cs
++++ b/src/costats.Infrastructure/Providers/MulticcClaudeLogSource.cs
+@@ -21,10 +21,10 @@
+     private readonly ExpenseAnalyzer _expenseAnalyzer = new();
+     private readonly string _logDirectory;
+ 
+-    public MulticcClaudeLogSource(MulticcProfile profile)
++    public MulticcClaudeLogSource(MulticcProfile profile, bool readOnly = false)
+     {
+         _profile = profile;
+-        _oauthFetcher = new ClaudeOAuthUsageFetcher(profile.ConfigDir);
++        _oauthFetcher = new ClaudeOAuthUsageFetcher(profile.ConfigDir, allowDelegatedRefresh: !readOnly, useDiskCache: !readOnly);
+         _logDirectory = Path.Combine(profile.ConfigDir, "projects");
+     }
+ 

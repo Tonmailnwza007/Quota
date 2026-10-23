@@ -1,0 +1,30 @@
+[
+  {
+    "path": "src/costats.Application/Pulse/PulseOrchestrator.cs",
+    "sha256": "bc0975874ced4c21e37f3586218e9aab9c35f5c44e9ddadeb15981845a854499"
+  },
+  {
+    "path": "src/costats.Application/Settings/AppSettings.cs",
+    "sha256": "8953b072d9788185c448f6dc19148c635bbd17f1b3a09572c01ef4cb2f652e08"
+  },
+  {
+    "path": "src/costats.Infrastructure/Providers/AntigravityAppSource.cs",
+    "sha256": "d1ac39f2cdc51cd2ff6debb9a243d01aa4d509126b1553e6e3feb7faefb8110f"
+  },
+  {
+    "path": "src/costats.Infrastructure/Providers/AntigravityQuotaParser.cs",
+    "sha256": "8ce8e8dcb1cedafbc3d2db650af49b55ffa33737c06698de54bf3dfe3ed54265"
+  },
+  {
+    "path": "src/costats.Infrastructure/Providers/ClaudeLogSource.cs",
+    "sha256": "f4d0e64dc8b20db583bb3870662ee76256470ec04cd512cbd4984fa93cd1ad75"
+  },
+  {
+    "path": "src/costats.Infrastructure/Providers/ClaudeOAuthUsageFetcher.cs",
+    "sha256": "bf7386e067f0ba87aa2aca4190b83dd4c6330a9418cd94a88c4166eb0a53a488"
+  },
+  {
+    "path": "src/costats.Infrastructure/Providers/MulticcClaudeLogSource.cs",
+    "sha256": "b179b684866fd00bcab8856d2cccf2bccb20aab778c9c01bfb33738326640676"
+  }
+]

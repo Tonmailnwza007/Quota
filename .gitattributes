@@ -1,0 +1,2 @@
+# Preserve the vendored engine bytes recorded in its provenance manifest.
+engine/** -text

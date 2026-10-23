@@ -1,0 +1,23 @@
+{
+  "name": "quota",
+  "productName": "Quota",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A minimal AI usage tray monitor",
+  "main": "main.cjs",
+  "author": "Quota contributors",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "demo": "electron . --fixture",
+    "test": "node --test test/policy.test.cjs test/bridge-client.test.cjs test/preferences.test.cjs",
+    "build": "node scripts/build.cjs",
+    "package": "node scripts/package.cjs",
+    "smoke": "node scripts/smoke.cjs",
+    "package-native": "node scripts/package-native.cjs"
+  },
+  "devDependencies": {
+    "@electron/packager": "20.3.0",
+    "electron": "44.9.0"
+  }
+}
