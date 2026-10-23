@@ -6,7 +6,7 @@ Only explicit display DTOs and validated preferences cross this boundary. Tokens
 
 ## Native WebView2 transport
 
-The Windows host calls `BridgeRuntime` directly and exposes a frozen `window.costats` API in the local top-level document only.
+The Windows host calls `BridgeRuntime` directly and exposes a frozen display API in the local top-level document only.
 
 - Request: `{id, method, params?}`.
 - Response: `{id, result}` or `{id, error: string}`.

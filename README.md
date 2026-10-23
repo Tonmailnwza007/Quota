@@ -20,4 +20,4 @@ No personal accounts, credentials, settings, or usage history are included. Quot
 
 [Usage and settings](docs/guide.md) · [Build from source](docs/development.md)
 
-MIT licensed. Built on the [costats](https://github.com/fmdz387/costats) engine. See [third-party notices](THIRD_PARTY_NOTICES.md).
+MIT licensed. See [third-party notices](THIRD_PARTY_NOTICES.md).

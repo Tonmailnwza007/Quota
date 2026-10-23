@@ -18,11 +18,10 @@ For a browser preview with synthetic accounts, run `npm.cmd run dev`. It does no
 ## Native integration check
 
 ```powershell
-$env:COSTATS_SMOKE_OUTPUT = "$env:TEMP/quota-native-smoke"
 & ./artifacts/1.0.0/quota-win32-x64/quota.exe --smoke
 ```
 
-Smoke mode stays hidden, uses isolated temporary settings and synthetic sources, and simulates startup and notifications. It checks provider filtering, collapse behavior, fixed panel height, message validation, and native popup styles. Actual Windows sign-in startup and visible notification delivery are manual checks. `--fixture` opens a synthetic tray session for manual inspection.
+Smoke mode writes `native-smoke.json` under `%TEMP%/quota-native-smoke-output`. It stays hidden, uses isolated temporary settings and synthetic sources, and simulates startup and notifications. It checks provider filtering, collapse behavior, fixed panel height, message validation, and native popup styles. Actual Windows sign-in startup and visible notification delivery are manual checks. `--fixture` opens a synthetic tray session for manual inspection.
 
 ## Source layout
 
@@ -30,7 +29,7 @@ Smoke mode stays hidden, uses isolated temporary settings and synthetic sources,
 - `src/native/`: Windows Forms/WebView2 tray host, validated preload, and native tests.
 - `src/bridge/`: C# runtime, account/session management, alert logic, and backend tests.
 - `src/contracts/`: display types and [message protocol](../src/contracts/PROTOCOL.md).
-- `src/engine/`: vendored costats engine, upstream license, provenance, and adaptation records.
+- `src/engine/`: provider engine, upstream license, provenance, and adaptation records.
 - `scripts/`: portable build tooling.
 
 The native host calls the bridge runtime directly. Credentials and raw provider responses never cross the display boundary. The separate bridge console entry point remains available for stdio consumers.
