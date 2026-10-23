@@ -16,7 +16,9 @@ const publish = path.resolve(root, 'native/publish');
 if (publish !== path.join(root,'native','publish') || !publish.startsWith(root + path.sep)) throw new Error('Unexpected native publish target.');
 fs.rmSync(publish,{recursive:true,force:true});
 run(process.env.DOTNET_PATH || 'dotnet',['publish',path.join(root,'native/Quota.Native.csproj'),'-c','Release','-r','win-x64','--self-contained','true',
-  '-p:RuntimeIdentifiers=win-x64','-p:PublishSingleFile=true','-p:IncludeNativeLibrariesForSelfExtract=true','-p:EnableCompressionInSingleFile=true','-o',publish]);
+  '-p:RuntimeIdentifiers=win-x64','-p:PublishSingleFile=true','-p:IncludeNativeLibrariesForSelfExtract=true','-p:EnableCompressionInSingleFile=true',
+  // Keep release binaries free of developer source paths and embedded debug symbols.
+  '-p:DebugType=None','-p:DebugSymbols=false',`-p:PathMap=${root}=/_/quota`,'-o',publish]);
 if (!fs.existsSync(path.join(publish, `${name}.exe`))) throw new Error('Native executable was not produced.');
 fs.mkdirSync(output,{recursive:true});
 fs.cpSync(publish,output,{recursive:true});

@@ -10,6 +10,8 @@ A minimal Windows tray monitor for two independent Codex accounts, one Antigravi
 
 Quit an older Quota build from its tray menu before starting this version. Extract the entire ZIP and run `quota.exe`. Keep the adjacent `renderer` folder, scripts and bundled files together. The app starts hidden in the Windows notification area; check hidden tray icons if necessary. The portable app includes its .NET runtime. Microsoft Edge WebView2 Runtime must already be installed; no Node, Rust, .NET SDK or installer is needed.
 
+The download contains no saved accounts, credentials, settings, usage history or browser profile. Quota reads existing sign-ins on the computer where you run it. Release binaries omit debug symbols and map source paths to a generic build directory.
+
 - Click the tray icon to toggle the compact flyout near that icon. There is no dashboard, taskbar button, resize switch, title bar or maximize control.
 - Click outside or press Escape to dismiss it. Escape closes settings first.
 - `Ctrl+Alt+U` toggles it when that shortcut is available. Another running app may own the shortcut.
